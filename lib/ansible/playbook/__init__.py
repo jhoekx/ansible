@@ -254,6 +254,20 @@ class PlayBook(object):
             self.SETUP_CACHE[host].update(facts)
             if task.register:
                 self.SETUP_CACHE[host][task.register] = result
+            # Add the host to groups detected by the module
+            groups = result.get('ansible_groups', [])
+            if groups:
+                inv_host = self.inventory.get_host(host)
+                if not inv_host:
+                    inv_host = ansible.inventory.Host(name=host)
+
+                for group in groups:
+                    inv_group = self.inventory.get_group(group)
+                    if not inv_group:
+                        inv_group = ansible.inventory.Group(name=group)
+                        self.inventory.add_group(inv_group)
+                    if inv_group not in inv_host.get_groups():
+                        inv_group.add_host(inv_host)
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
