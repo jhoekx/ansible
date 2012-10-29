@@ -234,6 +234,16 @@ def template_from_file(basedir, path, vars):
     environment.filters['from_json'] = json.loads
     environment.filters['to_yaml'] = yaml.dump
     environment.filters['from_yaml'] = yaml.load
+
+    ### Load filter plugins
+    filter_plugin_list = utils.import_plugins(os.path.join(basedir,'filter_plugins'))
+    for i in reversed(C.DEFAULT_FILTER_PLUGIN_PATH.split(os.pathsep)):
+        filter_plugin_list.update(utils.import_plugins(i))
+    for k,v in filter_plugin_list.items():
+        o = v.FilterModule()
+        for name,filter in o.filters().items():
+            environment.filters[name] = filter
+
     try:
         data = codecs.open(realpath, encoding="utf8").read()
     except UnicodeDecodeError:
